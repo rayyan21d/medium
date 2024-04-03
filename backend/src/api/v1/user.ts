@@ -86,6 +86,7 @@ userHandler.post('/signin', async (c)=>{
 
     const {email, password} = await c.req.json();
     //zod validation
+    console.log(email, password)
 
     try{
         emailSchema.parse(email)
@@ -95,7 +96,7 @@ userHandler.post('/signin', async (c)=>{
     }
 
     try{
-        const user = await prisma.user.findUnique({
+        const user = await prisma.user.findFirst({
             where:{
                 email: email
             }
