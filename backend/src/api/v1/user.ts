@@ -3,8 +3,9 @@ import {decode, sign, verify} from 'hono/jwt';
 
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
-import {z} from 'zod';
 
+
+import { signupInput, loginInput } from "@rayyan21d/medium-common";
 
 const userHandler = new Hono<{
     Bindings:{
@@ -13,9 +14,6 @@ const userHandler = new Hono<{
     }
 }>()
 
-
-const emailSchema = z.string().email();
-const passwordSchema = z.string().min(6);
 
 userHandler.post("/", (c)=>{
     return c.json({message: "Inside USers"})
@@ -29,12 +27,12 @@ userHandler.post('/signup', async (c)=>{
     }).$extends(withAccelerate())
 
 
-    const {email, password} = await c.req.json();
+    const {email, password, username} = await c.req.json();
     // validation
     try{
-        emailSchema.parse(email)
-        passwordSchema.parse(password)
+        signupInput.parse({email:email, password: password, username:username})
     }catch(e){
+        c.status(402);
         return c.json({message: 'invalid email or password'})
     }
 
@@ -46,6 +44,7 @@ userHandler.post('/signup', async (c)=>{
     })
 
     if(userExists){
+        c.status(409);
         return c.json({message: 'user already exists'})
     }else{
 
@@ -55,7 +54,8 @@ userHandler.post('/signup', async (c)=>{
             const user = await prisma.user.create({
             data:{
                 email,
-                password
+                password,
+                name: username
                 }   
             })
 
@@ -65,10 +65,12 @@ userHandler.post('/signup', async (c)=>{
 
             const token = await sign(payload, c.env.JWT_SECRET , 'HS256' )
 
+            c.status(200)
             return c.json({message: 'user created', token: token})
 
         } catch(e){
             console.log(e);
+            c.status(500);
             return c.json({message: 'error creating user'})
        }
 
@@ -89,9 +91,9 @@ userHandler.post('/signin', async (c)=>{
     console.log(email, password)
 
     try{
-        emailSchema.parse(email)
-        passwordSchema.parse(password)
+        loginInput.parse({email, password})
     }catch(e){
+        c.status(402);
         return c.json({message: 'invalid email or password'})
     }
 
@@ -103,22 +105,25 @@ userHandler.post('/signin', async (c)=>{
         })
 
         if(!user){
+            c.status(404);
             return c.json({message: 'user not found'})
         }
 
         if(user.password !== password){
+            c.status(401);
             return c.json({message: 'invalid password'})
         }else{
 
             const payload = { id: user.id }
             const token = await sign(payload, c.env.JWT_SECRET , 'HS256' )
-
+            c.status(200)
             return c.json({message: 'signin successful!', token: token})
         }
 
 
     }catch(e){
         console.log(e)
+        c.status(500);
         return c.json({message: 'signin failed'})
     }
 

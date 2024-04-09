@@ -3,6 +3,7 @@ import { verify } from "hono/jwt";
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import {z} from 'zod';
+import { createBlogInput, updateBlogInput } from "@rayyan21d/medium-common";
 
 const blogHandler = new Hono<{
     Bindings:{
@@ -47,18 +48,15 @@ blogHandler.all("/", async (c, next)=>{
 })
 
 
-const postSchema = z.object({
-    title: z.string().min(5),
-    content: z.string().min(10)
-})
 
 blogHandler.post('/', async (c)=>{
 
     const {title, content} = await c.req.json();
     // Validate Zod Schema
     try{
-        postSchema.safeParse({title, content})
+        createBlogInput.parse({title, content})
     }catch(e){
+        c.status(402);
         return c.json({message: 'Invalid title or content'})
     }
 
@@ -75,8 +73,11 @@ blogHandler.post('/', async (c)=>{
                 authorId: id
             }
         })
+
+        c.status(201);
         return c.json({message: 'Blog created successfully', blog})
     }catch(e){
+        c.status(500);
         return c.json({message: 'Error creating blog'})
     }finally{
         await prisma.$disconnect();
@@ -87,16 +88,15 @@ blogHandler.post('/', async (c)=>{
 
 blogHandler.put('/', async (c)=>{
 
-    const {title, content} = await c.req.json();
+    const {title, content, postId} = await c.req.json();
     // Validate Zod Schema
     try{
-        postSchema.safeParse({title, content})
+        updateBlogInput.parse({title, content, postId})
     }catch(e){
         return c.json({message: 'Invalid title or content'})
     }
 
     const userId = c.get("userId");
-    const {postId} = await c.req.json();
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
@@ -114,8 +114,10 @@ blogHandler.put('/', async (c)=>{
             
         });
 
-        return c.json({message: 'Blog Updated successfully', blog})
+        c.status(204);
+        return c.json({message: 'Blog Updated successfully', blog:blog})
     }catch(e){
+        c.status(500);
         return c.json({message: 'Error Updating blog'})
     }finally{
         await prisma.$disconnect();
@@ -139,8 +141,10 @@ blogHandler.delete('/', async (c)=>{
             }
         });
 
-        return c.json({message: 'Blog Deleted successfully', blog})
+        c.status(200);
+        return c.json({message: 'Blog Deleted successfully', blog: blog})
     }catch(e){
+        c.status(500);
         return c.json({message: 'Error creating blog'})
     }finally{
         await prisma.$disconnect();
@@ -157,14 +161,32 @@ blogHandler.get('/bulk', async (c)=>{
     console.log(c.req.param());
 
     try{
-        const blog = await prisma.post.findMany();
+        const blog = await prisma.post.findMany({
+            select:{
+                content:true,
+                title:true,
+                id:true,
+                createdAt:true,
+                updatedAt:true,
+                authorId:true,
+                author:{
+                    select:{
+                        name:true
+                    }
+                
+                }
+            }
+        });
 
         if(!blog){
+            c.status(404);
             return c.json({message: 'Blogs not found'})}
         else{
-            return c.json({message: 'Blog found', blog})
+            c.status(200);
+            return c.json({message: 'Blog found', blogs: blog})
         }
     }catch(e){
+        c.status(500);
         return c.json({message: 'Error finding blog'})
     }finally{
         await prisma.$disconnect();
@@ -185,14 +207,31 @@ blogHandler.get('/:id', async (c)=>{
         const blog = await prisma.post.findFirst({
             where:{
                 id: c.req.param().id
+            },
+            select:{
+                content:true,
+                title:true,
+                id:true,
+                createdAt:true,
+                updatedAt:true,
+                authorId:true,
+                author:{
+                    select:{
+                        name:true,
+                        id: true
+                    }
+                }
             }
         })
         if(!blog){
+            c.status(404);
             return c.json({message: 'Blog not found'})}
         else{
-            return c.json({message: 'Blog found', blog})
+            c.status(200);
+            return c.json({message: 'Blog found', blog: blog})
         }
     }catch(e){
+        c.status(500);
         return c.json({message: 'Error finding blog'})
     }finally{
         await prisma.$disconnect();
