@@ -2,6 +2,7 @@ import React, { ChangeEvent, useState } from "react";
 import AppBar from "../components/AppBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { BACKEND_URL } from "../../config";
 const Publish = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -11,7 +12,7 @@ const Publish = () => {
     e.preventDefault();
 
     const response = await axios.post(
-      "http://127.0.0.1:8787/api/v1/blog",
+      `${BACKEND_URL}/api/v1/blog`,
       {
         title: title,
         content: content,
