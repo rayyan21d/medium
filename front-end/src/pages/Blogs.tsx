@@ -29,6 +29,7 @@ const Blog = () => {
         <div className="flex justify-center">
           <div className="max-w-2xl">
             <BlogCard
+              id="1"
               authorName="Rayyan"
               title="How does one go from an ugly duckling to a beautiful swan within a span of one year  and 6 months?"
               content="Some content of the thing is init and here is what I can add. I wanna do great things in life"

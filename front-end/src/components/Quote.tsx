@@ -1,5 +1,3 @@
-import React from "react";
-
 const Quote = () => {
   return (
     <div className="bg-gray-300 h-screen flex justify-center flex-col px-10">

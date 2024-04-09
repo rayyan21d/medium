@@ -10,7 +10,7 @@ export interface Blog{
     "authorId": string;
     "createdAt": string;
     "updatedAt": string;
-    "author"?: {
+    "author": {
         "id": string;
         "name": string;
         "email": string;
@@ -70,7 +70,11 @@ const defaultBlog: Blog ={
         updatedAt: "2024-04-08T11:45:08.821Z",
         authorId: "cluqvs1lz00009csxpx43rbap",
         author: {
-            "name": "username1",
-            "id": "cluqvs1lz00009csxpx43rbap"
-        }
+            name: "username1",
+            id: "cluqvs1lz00009csxpx43rbap",
+            email: "",
+            createdAt: "",
+            updatedAt: ""
+        },
+        published: true
 }

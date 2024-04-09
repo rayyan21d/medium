@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import AppBar from "../components/AppBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +8,7 @@ const Publish = () => {
   const [content, setContent] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: ChangeEvent<HTMLTextAreaElement>) => {
+  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     const response = await axios.post(
@@ -76,7 +76,7 @@ const TextEditor = ({
             <textarea
               onChange={onChange}
               id="editor"
-              rows="10"
+              rows={10}
               className="block w-full text-md font-serif pt-4 text-gray-800  p-2.5 focus:outline-none"
               placeholder="Write an article..."
               required
